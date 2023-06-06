@@ -7,7 +7,7 @@
 % %% init
 % load;
 
-function [Tree,Error,msg] = SimpleShapeAlgorithm(BasicWS,N,StartNode,TargetNode)
+function [Tree,Error,msg] = SimpleShapeAlgorithm(BasicWS,N,StartNode,TargetNode,A)
 % dbstop in NotTested at 12
 % dbstop if error
 % close all
@@ -15,6 +15,14 @@ function [Tree,Error,msg] = SimpleShapeAlgorithm(BasicWS,N,StartNode,TargetNode)
 % N = sum(logical(StartNode{1,"ConfigMat"}{:}),'all');
 % Size = [N, 2*N];
 % BasicWS = WorkSpace(Size,"RRT*");
+arguments
+    BasicWS
+    N
+    StartNode
+    TargetNode
+    A.GroupSize_Approx = false;
+end
+
 Error = false;
 Ploting = 0;
 try
@@ -22,7 +30,6 @@ ConfigStruct_A = Node2ConfigStruct(StartNode);
 Start_WS = SetConfigurationOnSpace(BasicWS,ConfigStruct_A);
 
 
-% 
 ConfigStruct_B = Node2ConfigStruct(TargetNode);
 Target_WS = SetConfigurationOnSpace(BasicWS,ConfigStruct_B);
 
@@ -48,12 +55,12 @@ ParentInd = 1;
 Start_WS.Center_Of_Area = centerOfArea(Start_WS);
 KillSwitch = tic;
 while any(Tree.Data{ParentInd,"IsomorphismMatrices1"}{1}(:,:,1) ~= TargetNode.IsomorphismMatrices1{1}(:,:))
-    Line = find(Tree.Data{ParentInd,"IsomorphismMatrices1"}{1}(:,:,1) ~= TargetNode.IsomorphismMatrices1{1}(:,:),1,"last");
+    Line = find(abs(Tree.Data{ParentInd,"IsomorphismMatrices1"}{1}(:,:,1) - TargetNode.IsomorphismMatrices1{1}(:,:),1,"last") > A.GroupSize_Approx);
     % if Line ==3
     %     d=5;
     % end
-    while any(Tree.Data{ParentInd,"IsomorphismMatrices1"}{1}(Line,:,1) ~= TargetNode.IsomorphismMatrices1{1}(Line,:)) 
-        [Start_WS,Tree, ParentInd,ConfigShift,LineCreated,Error,msg] = Module_to_Destination(Start_WS,Tree, ParentInd,TargetNode,ConfigShift,Line,Downwards,Ploting,KillSwitch);
+    while any((Tree.Data{ParentInd,"IsomorphismMatrices1"}{1}(Line,:,1) - TargetNode.IsomorphismMatrices1{1}(Line,:)) > A.GroupSize_Approx) 
+        [Start_WS,Tree, ParentInd,ConfigShift,LineCreated,Error,msg] = Module_to_Destination(Start_WS,Tree, ParentInd,TargetNode,ConfigShift,Line,Downwards,Ploting,KillSwitch,"GroupSize_Approx",A.GroupSize_Approx);
         if LineCreated
             break
         end
@@ -74,7 +81,7 @@ end
 
 end
 
-function [WS,Tree, ParentInd,ConfigShift,LineCreated,Error,msg] = Module_to_Destination(WS,Tree, ParentInd,TargetConfig,ConfigShift,Line,Downwards,Ploting,KillSwitch)
+function [WS,Tree, ParentInd,ConfigShift,LineCreated,Error,msg] = Module_to_Destination(WS,Tree, ParentInd,TargetConfig,ConfigShift,Line,Downwards,Ploting,KillSwitch,A)
 
 arguments
     WS
@@ -86,6 +93,7 @@ arguments
     Downwards = [];
     Ploting = false;
     KillSwitch = inf;
+    A.GroupSize_Approx = false;
 end
 % Ploting = false;
 % Ploting = true;
@@ -98,7 +106,7 @@ end
     % if ParentInd >= 113
     %         d=5;
     % end    
-    Task_Queue = Module_Task_Allocation(StartConfig_GroupMatrix, TargetConfig_GroupMatrix,Downwards, Line,WS=WS,ConfigShift=ConfigShift);
+    Task_Queue = Module_Task_Allocation(StartConfig_GroupMatrix, TargetConfig_GroupMatrix,Downwards, Line,WS=WS,ConfigShift=ConfigShift,GroupSize_Approx=A.GroupSize_Approx);
     catch me
         me
     end

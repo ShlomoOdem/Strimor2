@@ -14,7 +14,7 @@ arguments
     Addition.totalDownwards = Downwards;
     Addition.GroupSize_Approx = false;
 end
-[AbsDiff, AlphaDiff, BetaDiff, Switch] = GetGroupConfigDiff(StartConfig,TargetConfig,Addition.GroupSize_Approx);
+[AbsDiff, AlphaDiff, BetaDiff, Switch] = GetGroupConfigDiff(StartConfig,TargetConfig);
 
 if numel(Addition.BetaDiff_Override) == 1 || numel(Addition.AlphaDiff_Override) == 1
     Temp = zeros(size(StartConfig));
